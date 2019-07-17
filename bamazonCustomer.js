@@ -1,41 +1,26 @@
 // REQUIRES
 const inquirer = require('inquirer');
-const mysql = require('mysql2/promise');
-const connectionParams = require('./ConnParams');
-const helper = require('./HelperFunc');
+const helper = require('./HelperFunctions');
 
 
 
 // FUNCTIONS
 async function connectToMySQL() {
-    try {
-        let connection = await mysql.createConnection(connectionParams);
-        let [productList] = await connection.query(
-            `SELECT * FROM products`
-        );
-
-        askProduct(productList);
-        connection.end();
-    } catch (err) {
-        console.log(err);
-    }
+    let productList = await helper.getProductList();
+    askProduct(productList);
 }
 
 function askProduct(productList) {
     const productNames = productList.map((product) => { return product.product_name; });
 
-    productList.forEach(product => {
-        console.log('\nProduct ' + product.item_id);
-        console.log('Name: ' + product.product_name);
-        console.log('Price: $' + product.price);
-    });
+    helper.displayAllProducts(productList);
 
     console.log('');
 
     inquirer
         .prompt([
             {
-                name: 'productToBuy',
+                name: 'productSelected',
                 type: 'list',
                 message: 'Which product would you like to buy?',
                 choices: productNames
@@ -47,7 +32,7 @@ function askProduct(productList) {
             }
         ])
         .then((response) => {
-            const product = helper.getProductByName(productList, response.productToBuy);
+            const product = helper.getProductByName(productList, response.productSelected);
 
             updateProduct(product, response.amountToBuy);
         }).catch((err) => {
@@ -55,34 +40,44 @@ function askProduct(productList) {
         });
 }
 
-function updateProduct(product, amountToBuy) {
-    if (product.stock_quantity < amountToBuy) {
+async function updateProduct(product, amountToBuy) {
+    if (isNaN(amountToBuy)) {
+        newPurchase();
+        return;
+    }
+    else if (product.stock_quantity < amountToBuy) {
         console.log('\nThe store doesn\'t have that many ' + product.product_name + 's.');
+        newPurchase();
         return;
     }
 
     product.stock_quantity -= amountToBuy;
-    const amountSpent = (product.price * amountToBuy).toFixed(2);
+    await helper.updateDatabase(product);
 
-    updateDatabase(product, amountSpent);
+    const amountSpent = (product.price * amountToBuy).toFixed(2);
+    console.log('\nYou spent $' + amountSpent);
+
+    newPurchase();
 }
 
-async function updateDatabase(product, amountSpent) {
-    try {
-        let connection = await mysql.createConnection(connectionParams);
-        await connection.query(
-            `UPDATE products SET ? WHERE item_id = ? `,
-            [
-                product,
-                product.item_id
-            ]
-        );
+function newPurchase() {
+    console.log('');
 
-        console.log('\nYou spent $' + amountSpent + '.');
-        connection.end();
-    } catch (err) {
-        console.log(err);
-    }
+    inquirer
+        .prompt([
+            {
+                name: 'doNewPurchase',
+                type: 'confirm',
+                message: 'Would you like to purchase another item?'
+            }
+        ])
+        .then((response) => {
+            if (response.doNewPurchase) {
+                connectToMySQL();
+            }
+        }).catch((err) => {
+            console.log(err);
+        });
 }
 
 

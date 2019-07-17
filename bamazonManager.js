@@ -1,84 +1,143 @@
 // REQUIRES
 const inquirer = require('inquirer');
-const mysql = require('mysql2/promise');
-const connectionParams = require('./ConnParams');
-const helper = require('./HelperFunc');
+const helper = require('./HelperFunctions');
 
 
 
 // FUNCTIONS
 async function connectToMySQL() {
-    try {
-        let connection = await mysql.createConnection(connectionParams);
-        let [productList] = await connection.query(
-            `SELECT * FROM products`
-        );
-
-        askProduct(productList);
-        connection.end();
-    } catch (err) {
-        console.log(err);
-    }
+    let productList = await helper.getProductList();
+    askManagerDuties(productList);
 }
 
-function askProduct(productList) {
-    let productNames = [];
+function askManagerDuties(productList) {
+    console.log('');
 
+    inquirer
+        .prompt([
+            {
+                name: 'managerDuty',
+                type: 'list',
+                message: 'What would you like to do?',
+                choices: ['View Products for Sale', 'View Low Inventory', 'Add to Inventory', 'Add new Product', 'Exit']
+            }
+        ])
+        .then((response) => {
+            const choice = response.managerDuty;
+
+            switch (choice) {
+                case 'View Products for Sale':
+                    viewProducts(productList);
+                    break;
+                case 'View Low Inventory':
+                    viewLowInventory(productList);
+                    break;
+                case 'Add to Inventory':
+                    addToInventory(productList);
+                    break;
+                case 'Add new Product':
+                    addNewProduct();
+                    break;
+            }
+        }).catch((err) => {
+            console.log(err);
+        });
+}
+
+function viewProducts(productList) {
+    helper.displayAllProducts(productList);
+    askManagerDuties(productList);
+}
+
+function viewLowInventory(productList) {
     productList.forEach(product => {
-        productNames.push(product.product_name);
+        if (product.stock_quantity < 5) {
+            helper.displayProduct(product);
+            console.log('In Stock: ' + product.stock_quantity);
+        }
     });
+    askManagerDuties(productList);
+}
+
+function addToInventory(productList) {
+    const productNames = productList.map((product) => { return product.product_name; });
 
     console.log('');
 
     inquirer
         .prompt([
             {
-                name: 'productToBuy',
+                name: 'productSelected',
                 type: 'list',
-                message: 'Which product would you like to buy?',
+                message: 'Which product would you like to add stock to?',
                 choices: productNames
             },
             {
-                name: 'amountToBuy',
+                name: 'amountToAdd',
                 type: 'number',
-                message: 'How many would you like to buy?'
+                message: 'How many would you like to add?'
             }
         ])
         .then((response) => {
-            let product = helper.getObjByName(productList, response.productToBuy);
+            const product = helper.getProductByName(productList, response.productSelected);
 
-            updateProduct(product, response.amountToBuy);
+            updateProduct(product, response.amountToAdd);
+        }).catch((err) => {
+            console.log(err);
         });
 }
 
-function updateProduct(product, amountToBuy) {
-    if (product.stock_quantity < amountToBuy) {
-        console.log('\nThe store doesn\'t have enough ' + product.product_name + 's.');
+async function updateProduct(product, amountToAdd) {
+    if (isNaN(amountToAdd)) {
+        connectToMySQL();
         return;
     }
-
-    product.stock_quantity -= amountToBuy;
-    const amountSpent = (product.price * amountToBuy).toFixed();
-
-    updateDatabase(product, amountSpent);
+    product.stock_quantity += amountToAdd;
+    await helper.updateDatabase(product);
+    console.log('Success! ' + product.product_name + '\'s stock is now ' + product.stock_quantity + '.');
+    connectToMySQL();
 }
 
-async function updateDatabase(product, amountSpent) {
-    try {
-        let connection = await mysql.createConnection(connectionParams);
-        await connection.query(
-            `UPDATE products SET ? WHERE item_id = ? `,
-            [
-                product,
-                product.item_id
-            ]
-        );
-
-        console.log('\nYou spent $' + amountSpent + '.');
-        connection.end();
-    } catch (err) {
-        console.log(err);
-    }
+function addNewProduct() {
+    inquirer
+        .prompt([
+            {
+                name: 'newItemName',
+                type: 'input',
+                message: 'What\'s the name of the item?'
+            },
+            {
+                name: 'newItemDepartment',
+                type: 'input',
+                message: 'What department is the item in?'
+            },
+            {
+                name: 'newItemPrice',
+                type: 'number',
+                message: 'How much will the item cost?'
+            },
+            {
+                name: 'newItemQuantity',
+                type: 'number',
+                message: 'How many does the store have in stock?'
+            }
+        ])
+        .then((response) => {
+            let newItem = {
+                product_name: response.newItemName,
+                department_name: response.newItemDepartment,
+                price: response.newItemPrice,
+                stock_quantity: response.newItemQuantity
+            };
+            
+            helper.addToDatabase(newItem);
+            connectToMySQL();
+        }).catch((err) => {
+            console.log(err);
+        });
 }
 
+
+
+// FUNCTION CALLS
 connectToMySQL();

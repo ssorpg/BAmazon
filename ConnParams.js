@@ -9,7 +9,7 @@ const connectionParams = {
     port: 3306,
     user: keys.mySQL.username,
     password: keys.mySQL.password,
-    database: 'bamazon'
+    database: 'BAmazon'
 };
 
 

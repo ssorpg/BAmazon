@@ -1,8 +1,8 @@
-DROP DATABASE IF EXISTS bamazon;
+DROP DATABASE IF EXISTS BAmazon;
 
-CREATE DATABASE bamazon;
+CREATE DATABASE BAmazon;
 
-USE bamazon;
+USE BAmazon;
 
 CREATE TABLE products
 (
