@@ -5,7 +5,7 @@ const helper = require('./helperFunctions');
 
 
 // FUNCTIONS
-async function connectToMySQL() {
+async function getProductList() {
     const productList = await helper.getTableList('products');
     askProduct(productList);
 }
@@ -75,7 +75,7 @@ function newPurchase() {
         ])
         .then((response) => {
             if (response.doNewPurchase) {
-                connectToMySQL();
+                getProductList();
             }
         }).catch((err) => {
             console.log(err);
@@ -86,4 +86,4 @@ function newPurchase() {
 
 
 // FUNCTION CALLS
-connectToMySQL();
+getProductList();

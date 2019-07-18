@@ -5,7 +5,7 @@ const helper = require('./helperFunctions');
 
 
 // FUNCTIONS
-async function connectToMySQL() {
+async function getProductList() {
     const productList = await helper.getTableList('products');
     askManagerDuties(productList);
 }
@@ -91,7 +91,7 @@ function addToInventory(productList) {
 
 async function updateProduct(product, amountToAdd) {
     if (isNaN(amountToAdd)) {
-        connectToMySQL();
+        getProductList();
         return;
     }
 
@@ -100,7 +100,7 @@ async function updateProduct(product, amountToAdd) {
 
     console.log('Success! ' + product.product_name + '\'s stock is now ' + product.stock_quantity + '.');
 
-    connectToMySQL();
+    getProductList();
 }
 
 function addNewProduct() {
@@ -136,7 +136,7 @@ function addNewProduct() {
             };
             
             helper.addToTable('products', newProduct);
-            connectToMySQL();
+            getProductList();
         }).catch((err) => {
             console.log(err);
             return;
@@ -146,4 +146,4 @@ function addNewProduct() {
 
 
 // FUNCTION CALLS
-connectToMySQL();
+getProductList();
