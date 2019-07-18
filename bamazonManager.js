@@ -1,12 +1,12 @@
 // REQUIRES
 const inquirer = require('inquirer');
-const helper = require('./HelperFunctions');
+const helper = require('./helperFunctions');
 
 
 
 // FUNCTIONS
 async function connectToMySQL() {
-    let productList = await helper.getProductList();
+    const productList = await helper.getTableList('products');
     askManagerDuties(productList);
 }
 
@@ -41,6 +41,7 @@ function askManagerDuties(productList) {
             }
         }).catch((err) => {
             console.log(err);
+            return;
         });
 }
 
@@ -84,6 +85,7 @@ function addToInventory(productList) {
             updateProduct(product, response.amountToAdd);
         }).catch((err) => {
             console.log(err);
+            return;
         });
 }
 
@@ -92,9 +94,12 @@ async function updateProduct(product, amountToAdd) {
         connectToMySQL();
         return;
     }
+
     product.stock_quantity += amountToAdd;
-    await helper.updateDatabase(product);
+    await helper.updateTable('products', product);
+
     console.log('Success! ' + product.product_name + '\'s stock is now ' + product.stock_quantity + '.');
+
     connectToMySQL();
 }
 
@@ -102,38 +107,39 @@ function addNewProduct() {
     inquirer
         .prompt([
             {
-                name: 'newItemName',
+                name: 'newProductName',
                 type: 'input',
                 message: 'What\'s the name of the item?'
             },
             {
-                name: 'newItemDepartment',
+                name: 'newProductDepartment',
                 type: 'input',
                 message: 'What department is the item in?'
             },
             {
-                name: 'newItemPrice',
+                name: 'newProductPrice',
                 type: 'number',
                 message: 'How much will the item cost?'
             },
             {
-                name: 'newItemQuantity',
+                name: 'newProductQuantity',
                 type: 'number',
                 message: 'How many does the store have in stock?'
             }
         ])
         .then((response) => {
-            let newItem = {
-                product_name: response.newItemName,
-                department_name: response.newItemDepartment,
-                price: response.newItemPrice,
-                stock_quantity: response.newItemQuantity
+            const newProduct = {
+                product_name: response.newProductName,
+                department_name: response.newProductDepartment,
+                price: response.newProductPrice,
+                stock_quantity: response.newProductQuantity
             };
             
-            helper.addToDatabase(newItem);
+            helper.addToTable('products', newProduct);
             connectToMySQL();
         }).catch((err) => {
             console.log(err);
+            return;
         });
 }
 

@@ -1,12 +1,12 @@
 // REQUIRES
 const inquirer = require('inquirer');
-const helper = require('./HelperFunctions');
+const helper = require('./helperFunctions');
 
 
 
 // FUNCTIONS
 async function connectToMySQL() {
-    let productList = await helper.getProductList();
+    const productList = await helper.getTableList('products');
     askProduct(productList);
 }
 
@@ -37,6 +37,7 @@ function askProduct(productList) {
             updateProduct(product, response.amountToBuy);
         }).catch((err) => {
             console.log(err);
+            return;
         });
 }
 
@@ -51,10 +52,11 @@ async function updateProduct(product, amountToBuy) {
         return;
     }
 
-    product.stock_quantity -= amountToBuy;
-    await helper.updateDatabase(product);
-
     const amountSpent = (product.price * amountToBuy).toFixed(2);
+    product.product_sales = helper.addStringFloats(product.product_sales, amountSpent);
+    product.stock_quantity -= amountToBuy;
+    await helper.updateTable('products', product);
+
     console.log('\nYou spent $' + amountSpent);
 
     newPurchase();
@@ -77,6 +79,7 @@ function newPurchase() {
             }
         }).catch((err) => {
             console.log(err);
+            return;
         });
 }
 

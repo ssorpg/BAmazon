@@ -1,5 +1,5 @@
 // REQUIRES
-const keys = require('./Keys');
+const keys = require('./keys');
 
 
 

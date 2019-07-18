@@ -18,6 +18,7 @@
   },
   "homepage": "https://github.com/ssorpg/BAmazon#readme",
   "dependencies": {
+    "easy-table": "^1.1.1",
     "inquirer": "^6.5.0",
     "mysql2": "^1.6.5"
   }

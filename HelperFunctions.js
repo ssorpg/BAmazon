@@ -1,10 +1,18 @@
 // REQUIRES
 const mysql = require('mysql2/promise');
-const connectionParams = require('./ConnParams');
+const connectionParams = require('./connectionParams');
 
 
 
 // FUNCTIONS
+
+// GENERAL
+function addStringFloats(float1, float2) {
+    let floatNum = parseFloat(float1) + parseFloat(float2);
+    return floatNum.toString();
+}
+
+// PRODUCTS
 function getProductByName(productList, name) {
     let foundProduct = productList.find((curProduct) => { return curProduct.product_name === name; });
 
@@ -23,25 +31,27 @@ function displayAllProducts(productList) {
     });
 }
 
-async function getProductList() {
+// MYSQL
+async function getTableList(table) {
     try {
         let connection = await mysql.createConnection(connectionParams);
         let [productList] = await connection.query(
-            `SELECT * FROM products`
+            `SELECT * FROM ${table}`
         );
         connection.end();
 
         return productList;
     } catch (err) {
         console.log(err);
+        return;
     }
 }
 
-async function updateDatabase(product) {
+async function updateTable(table, product) {
     try {
         let connection = await mysql.createConnection(connectionParams);
         await connection.query(
-            `UPDATE products SET ? WHERE item_id = ? `,
+            `UPDATE ${table} SET ? WHERE item_id = ? `,
             [
                 product,
                 product.item_id
@@ -50,14 +60,15 @@ async function updateDatabase(product) {
         connection.end();
     } catch (err) {
         console.log(err);
+        return;
     }
 }
 
-async function addToDatabase(newItem) {
+async function addToTable(table, newItem) {
     try {
         let connection = await mysql.createConnection(connectionParams);
         await connection.query(
-            `INSERT INTO products SET ?`,
+            `INSERT INTO ${table} SET ?`,
             [
                 newItem
             ]
@@ -65,17 +76,75 @@ async function addToDatabase(newItem) {
         connection.end();
     } catch (err) {
         console.log(err);
+        return;
     }
+}
+
+async function getProfitTable() {
+    try {
+        let connection = await mysql.createConnection(connectionParams);
+        let [table] = await connection.query(
+            `
+            SELECT 
+                department_id,
+                departments.department_name,
+                over_head_costs,
+                SUM(product_sales) AS product_sales,
+                SUM(product_sales) - over_head_costs AS total_profit
+            FROM
+                departments
+            LEFT JOIN
+                products ON departments.department_name = products.department_name
+            GROUP BY
+                department_id
+            `
+        );
+        connection.end();
+
+        return table;
+    } catch (err) {
+        console.log(err);
+        return;
+    }
+}
+
+function formatProfitTable(profitTable) {
+    let formattedTable = [];
+
+    profitTable.forEach(department => {
+        department.over_head_costs = '$' + parseFloat(department.over_head_costs).toFixed(2);
+    
+        if (department.product_sales === null) {
+            department.product_sales = '$0.00';
+            department.total_profit = '-' + department.over_head_costs;
+        }
+        else {
+            department.product_sales = '$' + parseFloat(department.product_sales).toFixed(2);
+            department.total_profit = '$' + parseFloat(department.total_profit).toFixed(2);
+        }
+    
+        formattedTable.push(department);
+    });
+
+    return formattedTable;
 }
 
 
 
 // EXPORTS
 module.exports = {
+    // GENERAL
+    addStringFloats: addStringFloats,
+    
+    // PRODUCTS
     getProductByName: getProductByName,
     displayProduct: displayProduct,
     displayAllProducts: displayAllProducts,
-    getProductList: getProductList,
-    updateDatabase: updateDatabase,
-    addToDatabase: addToDatabase
+
+    // MYSQL
+    getTableList: getTableList,
+    updateTable: updateTable,
+    addToTable: addToTable,
+    getProfitTable: getProfitTable,
+    formatProfitTable: formatProfitTable
 };
