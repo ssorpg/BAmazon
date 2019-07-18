@@ -11,7 +11,9 @@ Clone the repository to your computer and run bamazonSeed.sql in MySQL workbench
 Then run one of these files:
 
 > bamazonCustomer.js
+
 > bamazonManager.js
+
 > bamazonSupervisor.js
 
 with Node to start their respective parts of the program.
