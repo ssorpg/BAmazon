@@ -54,11 +54,11 @@ function createDepartment() {
             {
                 name: 'newDepartmentOverhead',
                 type: 'number',
-                message: 'How much is the estmated overhead cost of the department?'
+                message: 'How much is the estimated overhead cost of the department?'
             }
         ])
         .then((response) => {
-            let newDepartment = {
+            const newDepartment = {
                 department_name: response.newDepartmentName,
                 over_head_costs: response.newDepartmentOverhead
             };

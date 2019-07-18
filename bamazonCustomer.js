@@ -11,9 +11,9 @@ async function getProductList() {
 }
 
 function askProduct(productList) {
-    const productNames = productList.map((product) => { return product.product_name; });
-
     helper.displayAllProducts(productList);
+
+    const productNames = productList.map((product) => { return product.product_name; });
 
     console.log('');
 
