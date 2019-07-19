@@ -36,7 +36,7 @@ function askManagerDuties(productList) {
                     addToInventory(productList);
                     break;
                 case 'Add new Product':
-                    addNewProduct();
+                    getNewProductInfo();
                     break;
             }
         }).catch((err) => {
@@ -98,12 +98,12 @@ async function updateProduct(product, amountToAdd) {
     product.stock_quantity += amountToAdd;
     await helper.updateTable('products', product);
 
-    console.log('Success! ' + product.product_name + '\'s stock is now ' + product.stock_quantity + '.');
+    console.log('\nSuccess! ' + product.product_name + '\'s stock is now ' + product.stock_quantity + '.');
 
     getProductList();
 }
 
-function addNewProduct() {
+function getNewProductInfo() {
     inquirer
         .prompt([
             {
@@ -135,12 +135,16 @@ function addNewProduct() {
                 stock_quantity: response.newProductQuantity
             };
             
-            helper.addToTable('products', newProduct);
-            getProductList();
+            addNewProduct(newProduct);
         }).catch((err) => {
             console.log(err);
             return;
         });
+}
+
+async function addNewProduct(newProduct) {
+    await helper.addToTable('products', newProduct);
+    getProductList();
 }
 
 

@@ -2,6 +2,8 @@
 
 Ever wondered what it would be like to have your own personal store? Wonder no longer - BAmazon is here to provide that experience!
 
+[![A video of BAmazon being used by the developer.](https://img.youtube.com/vi/rmfacr--L5Q/0.jpg)](https://www.youtube.com/watch?v=rmfacr--L5Q)
+
 <br>
 
 <h2>Instructions</h2>
